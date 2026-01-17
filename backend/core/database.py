@@ -12,6 +12,11 @@ async def init_db():
     await _db.command("ping")
     await _db.trials.create_index([("userId", 1), ("status", 1)])
     await _db.trials.create_index([("userId", 1), ("endDate", 1)])
+    await _db.trials.create_index(
+        [("userId", 1), ("serviceName", 1), ("endDate", 1)],
+        unique=True
+        )
+
 
 def get_db():
     if _db is None:
