@@ -1,40 +1,36 @@
-# FastAPI & Web Server
+# =========================
+# FastAPI & Web server
+# =========================
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
 
-# Database
+# =========================
+# Database (MongoDB async)
+# =========================
 motor==3.3.2
 pymongo==4.6.0
 
-# Session & Security (CRITICAL - was missing!)
+# =========================
+# Sessions & security
+# =========================
 itsdangerous==2.1.2
 cryptography==41.0.7
 
-# OAuth (for later)
+# =========================
+# Google OAuth + Gmail API
+# =========================
 google-auth==2.23.4
 google-auth-oauthlib==1.1.0
 google-api-python-client==2.108.0
 
+# =========================
 # Data validation
+# =========================
 pydantic==2.5.0
 pydantic-settings==2.1.0
 
+# =========================
 # Utils
+# =========================
 python-dotenv==1.0.0
 python-multipart==0.0.6
-
-# Authentification and OAuth
-google-auth==2.23.4
-google-auth-oauthlib==1.1.0
-google-api-python-client==2.108.0
-google.oauth2.credentials ==2.23.4
-googleapiclient.discovery ==2.108.0
-googleapiclient.errors ==2.108.0
-# Data validation
-pydantic==2.5.0
-pydantic-settings==2.1.0
-
-# Utils
-python-dotenv==1.0.0
-python-multipart==0.0.6
-services.email_monitor
