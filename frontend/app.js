@@ -1,7 +1,27 @@
 // ====== APP.JS - FreeFromTrial (UPDATED) ======
 
 // ====== INITIALIZATION ======
+document.addEventListener('DOMContentLoaded', async function () {
+  // init dropdown (même sans login)
+  initServiceDropdown();
 
+  // Set min date
+  const dateInput = document.getElementById('trialDate');
+  if (dateInput) dateInput.min = new Date().toISOString().split('T')[0];
+
+  // Auth check
+  const me = await apiMe();
+  if (me) {
+    currentUser = me;
+
+    // si tu veux la DB au lieu de data.js
+    if (typeof refreshSubscriptionsFromDB === "function") {
+      await refreshSubscriptionsFromDB();
+    }
+
+    showDashboard();
+  }
+});
 function initServiceDropdown() {
   const select = document.getElementById("trialServiceSelect");
   if (!select) return;
@@ -47,27 +67,7 @@ function onServiceSelectChange() {
 }
 
 
-document.addEventListener('DOMContentLoaded', async function () {
-  // init dropdown (même sans login)
-  initServiceDropdown();
 
-  // Set min date
-  const dateInput = document.getElementById('trialDate');
-  if (dateInput) dateInput.min = new Date().toISOString().split('T')[0];
-
-  // Auth check
-  const me = await apiMe();
-  if (me) {
-    currentUser = me;
-
-    // si tu veux la DB au lieu de data.js
-    if (typeof refreshSubscriptionsFromDB === "function") {
-      await refreshSubscriptionsFromDB();
-    }
-
-    showDashboard();
-  }
-});
 
 
 // ====== AUTH FUNCTIONS ======
