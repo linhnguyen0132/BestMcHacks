@@ -2,18 +2,22 @@
 
 // ====== INITIALIZATION ======
 
-document.addEventListener('DOMContentLoaded', async function() {
-  const me = await apiMe();
-  function initServiceDropdown() {
+// ---------- Dropdown (global) ----------
+function initServiceDropdown() {
   const select = document.getElementById("trialServiceSelect");
   if (!select) return;
+
+  // Si data.js n'est pas chargé, on évite de casser tout le JS
+  if (typeof commonServices === "undefined") {
+    console.warn("commonServices is undefined. Make sure data.js is loaded before app.js");
+    return;
+  }
 
   select.innerHTML = `
     <option value="">Select a service…</option>
     <option value="manual">Other (type manually)</option>
   `;
 
-  // commonServices vient de data.js
   Object.keys(commonServices).sort().forEach(service => {
     const opt = document.createElement("option");
     opt.value = service;
@@ -22,24 +26,50 @@ document.addEventListener('DOMContentLoaded', async function() {
   });
 }
 
-  if (me) {
-    currentUser = me;
-    await refreshSubscriptionsFromDB();
-    showDashboard();
+// Auto-fill cancel url (et prix plus tard si tu veux)
+function onServiceSelectChange() {
+  const select = document.getElementById("trialServiceSelect");
+  const nameInput = document.getElementById("trialName");
+  const urlInput = document.getElementById("trialUrl");
+
+  if (!select || !nameInput || !urlInput) return;
+
+  const value = select.value;
+
+  if (!value || value === "manual") {
+    nameInput.disabled = false;
+    if (value === "manual") nameInput.value = "";
+    return;
   }
 
-  const dateInput = document.getElementById('trialDate');
-  if (dateInput) dateInput.min = new Date().toISOString().split('T')[0];
-});
+  nameInput.disabled = true;
+  nameInput.value = value;
 
-document.addEventListener('DOMContentLoaded', async function() {
+  const svc = commonServices[value];
+  urlInput.value = svc?.cancelUrl || "";
+}
+
+// ---------- One single DOMContentLoaded ----------
+document.addEventListener("DOMContentLoaded", async () => {
+  // init dropdown even if not logged in
+  initServiceDropdown();
+
+  // Set min date
+  const dateInput = document.getElementById("trialDate");
+  if (dateInput) dateInput.min = new Date().toISOString().split("T")[0];
+
+  // Auth check
   const me = await apiMe();
   if (me) {
     currentUser = me;
+    if (typeof refreshSubscriptionsFromDB === "function") {
+      await refreshSubscriptionsFromDB();
+    }
     showDashboard();
   }
-  initServiceDropdown();
 });
+
+
 
 // ====== AUTH FUNCTIONS ======
 
