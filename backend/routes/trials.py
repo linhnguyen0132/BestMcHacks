@@ -7,7 +7,7 @@ from datetime import datetime, date, time, timezone, timedelta
 from core.auth import get_current_user
 from core.database import get_db
 
-router = APIRouter(prefix="/api/trials", tags=["trials"])
+router = APIRouter(prefix="/trials", tags=["trials"])
 
 class TrialCreate(BaseModel):
     serviceName: str
