@@ -183,8 +183,19 @@ async def update_trial(trial_id: str, patch: TrialUpdate):
         updates["endDate"] = date_to_datetime_utc(updates["endDate"])
 
     updates["updatedAt"] = datetime.now(timezone.utc)
-    ...
-
+    
+    # Perform update
+    res = await db.trials.update_one(
+        {"_id": oid(trial_id)},
+        {"$set": updates}
+    )
+    
+    if res.matched_count == 0:
+        raise HTTPException(404, "Trial not found")
+    
+    # Return updated document
+    updated = await db.trials.find_one({"_id": oid(trial_id)})
+    return to_str_id(updated)
 
 @router.delete("/{trial_id}")
 async def delete_trial(trial_id: str):
