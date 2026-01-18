@@ -1,9 +1,8 @@
 // ====== APP.JS - FreeFromTrial (UPDATED) ======
 
 // ====== INITIALIZATION ======
-document.addEventListener('DOMContentLoaded', async function() {
-  const me = await apiMe();
-  function initServiceDropdown() {
+
+function initServiceDropdown() {
   const select = document.getElementById("trialServiceSelect");
   if (!select) return;
 
@@ -21,34 +20,54 @@ document.addEventListener('DOMContentLoaded', async function() {
   });
 }
 
-  if (me) {
-    currentUser = me;
-    await refreshSubscriptionsFromDB();
-    showDashboard();
+
+function onServiceSelectChange() {
+  const select = document.getElementById("trialServiceSelect");
+  const nameInput = document.getElementById("trialName");
+  const priceInput = document.getElementById("trialPrice");
+  const urlInput = document.getElementById("trialUrl");
+
+  if (!select) return;
+  const value = select.value;
+
+  if (!value || value === "manual") {
+    // en mode manuel, tu laisses trialName editable
+    nameInput.disabled = false;
+    if (value === "manual") nameInput.value = "";
+    return;
   }
 
+  // service choisi => auto-fill
+  nameInput.disabled = true;
+  nameInput.value = value;
+
+  const svc = commonServices[value];
+  if (svc?.cancelUrl) urlInput.value = svc.cancelUrl;
+
+}
+
+
+document.addEventListener('DOMContentLoaded', async function () {
+  // init dropdown (même sans login)
+  initServiceDropdown();
+
+  // Set min date
   const dateInput = document.getElementById('trialDate');
   if (dateInput) dateInput.min = new Date().toISOString().split('T')[0];
-});
 
-document.addEventListener('DOMContentLoaded', async function() {
+  // Auth check
   const me = await apiMe();
   if (me) {
     currentUser = me;
+
+    // si tu veux la DB au lieu de data.js
+    if (typeof refreshSubscriptionsFromDB === "function") {
+      await refreshSubscriptionsFromDB();
+    }
+
     showDashboard();
   }
-  initServiceDropdown();
 });
-
-async function refreshSubscriptionsFromDB() {
-  try {
-    const docs = await apiGetTrials();
-    subscriptions = docs.map(trialDocToSubscription);
-  } catch (e) {
-    console.error("refreshSubscriptionsFromDB error:", e);
-    subscriptions = [];
-  }
-}
 
 
 // ====== AUTH FUNCTIONS ======
@@ -402,10 +421,17 @@ function filterSubscriptions(searchTerm) {
 
 function openAddModal() {
     document.getElementById('addModal').classList.remove('hidden');
-    document.getElementById('trialServiceSelect').value = "";
-    document.getElementById('trialName').classList.add("hidden");
-    document.getElementById('trialName').value = "";
 
+    // Reset dropdown + manual field
+    const select = document.getElementById("trialServiceSelect");
+    const manualWrap = document.getElementById("manualServiceWrapper");
+    const nameInput = document.getElementById("trialName");
+
+    if (select) select.value = "";
+    if (manualWrap) manualWrap.classList.add("hidden");
+    if (nameInput) nameInput.value = "";
+
+    // Reset other fields
     document.getElementById('trialDate').value = '';
     document.getElementById('trialPrice').value = '';
     document.getElementById('trialUrl').value = '';
@@ -413,6 +439,11 @@ function openAddModal() {
 
 function closeAddModal() {
     document.getElementById('addModal').classList.add('hidden');
+}
+function previewCancelUrl() {
+  const url = document.getElementById("trialUrl").value.trim();
+  if (!url) return alert("No cancel URL set yet.");
+  window.open(url, "_blank");
 }
 
 async function addTrial() {
@@ -475,6 +506,61 @@ async function deleteTrial(id) {
   } catch (e) {
     console.error(e);
     alert("Failed to delete: " + e.message);
+  }
+}
+
+function initPopularServicesDropdown() {
+  const select = document.getElementById("trialServiceSelect");
+  if (!select) return;
+
+  // Reset
+  select.innerHTML = `
+    <option value="">Select a popular service…</option>
+    <option value="__manual__">Other (type manually)</option>
+  `;
+
+  // Populate popular services
+  popularServices.forEach(s => {
+    const opt = document.createElement("option");
+    opt.value = s.name;
+    opt.textContent = `${s.icon} ${s.name}`;
+    select.appendChild(opt);
+  });
+}
+
+function onServiceSelectChange() {
+  const select = document.getElementById("trialServiceSelect");
+  const manualWrap = document.getElementById("manualServiceWrapper");
+  const nameInput = document.getElementById("trialName");
+  const priceInput = document.getElementById("trialPrice");
+  const urlInput = document.getElementById("trialUrl");
+
+  if (!select) return;
+
+  const chosen = select.value;
+
+  if (!chosen) {
+    // nothing selected
+    manualWrap.classList.add("hidden");
+    nameInput.value = "";
+    return;
+  }
+
+  if (chosen === "__manual__") {
+    // manual mode
+    manualWrap.classList.remove("hidden");
+    nameInput.value = "";
+    return;
+  }
+
+  // popular service selected -> auto-fill
+  manualWrap.classList.add("hidden");
+  nameInput.value = chosen;
+
+  const svc = popularServiceMap[chosen];
+  if (svc) {
+    if (priceInput) priceInput.value = svc.price || "";
+    if (urlInput) urlInput.value = svc.cancelUrl || "";
   }
 }
 

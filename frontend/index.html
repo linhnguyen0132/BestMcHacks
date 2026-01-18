@@ -390,15 +390,18 @@
             <p>Track a new subscription or free trial</p>
             
             <div class="form-group">
-                <label>Service Name</label>
+                <label>Service</label>
                 <select id="trialServiceSelect" onchange="onServiceSelectChange()">
-                <option value="">Select a service…</option>
-                <option value="manual">Other (type manually)</option>
+                    <option value="">Select a popular service…</option>
+                    <option value="__manual__">Other (type manually)</option>
                 </select>
+                </div>
 
-                <input type="text" id="trialName" placeholder="If Other, type service name" class="hidden">
+                <div class="form-group hidden" id="manualServiceWrapper">
+                <label>Service Name</label>
+                <input type="text" id="trialName" placeholder="Type service name...">
+                </div>
 
-            </div>
             <div class="form-group">
                 <label>Trial End Date</label>
                 <input type="date" id="trialDate">
@@ -410,6 +413,7 @@
             <div class="form-group">
                 <label>Cancellation URL (optional)</label>
                 <input type="url" id="trialUrl" placeholder="https://...">
+                <button class="btn-secondary" type="button" onclick="previewCancelUrl()">Open cancel link</button>
             </div>
             
             <div class="modal-actions">

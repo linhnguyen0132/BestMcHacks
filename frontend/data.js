@@ -69,19 +69,17 @@ const serviceIcons = {
 };
 
 // Common services with their cancel URLs
-const commonServices = {
-    "Netflix": { icon: "🎬", cancelUrl: "https://netflix.com/cancel" },
-    "Spotify": { icon: "🎵", cancelUrl: "https://spotify.com/account" },
-    "Disney+": { icon: "🏰", cancelUrl: "https://disneyplus.com/account" },
-    "Amazon Prime": { icon: "📦", cancelUrl: "https://amazon.com/prime" },
-    "Apple Music": { icon: "🍎", cancelUrl: "https://music.apple.com/account" },
-    "YouTube Premium": { icon: "▶️", cancelUrl: "https://youtube.com/premium" },
-    "HBO Max": { icon: "🎭", cancelUrl: "https://hbomax.com/settings" },
-    "Hulu": { icon: "📺", cancelUrl: "https://hulu.com/account" },
-    "Adobe": { icon: "🎨", cancelUrl: "https://account.adobe.com" },
-    "ChatGPT Plus": { icon: "🤖", cancelUrl: "https://chat.openai.com/settings" },
-    "Claude Pro": { icon: "🧠", cancelUrl: "https://claude.ai/settings" },
-    "Notion": { icon: "📝", cancelUrl: "https://notion.so/settings" },
-    "Figma": { icon: "🎨", cancelUrl: "https://figma.com/settings" },
-    "Canva Pro": { icon: "🖼️", cancelUrl: "https://canva.com/settings" }
-};
+const popularServices = [
+  { name: "Netflix", icon: "🎬", category: "Entertainment", price: "$15.99/month", cancelUrl: "https://www.netflix.com/YourAccount" },
+  { name: "Spotify Premium", icon: "🎵", category: "Music", price: "$10.99/month", cancelUrl: "https://www.spotify.com/account/" },
+  { name: "Disney+", icon: "🏰", category: "Entertainment", price: "$11.99/month", cancelUrl: "https://www.disneyplus.com/account" },
+  { name: "Amazon Prime", icon: "📦", category: "Shopping", price: "$9.99/month", cancelUrl: "https://www.amazon.ca/primecentral" },
+  { name: "Notion", icon: "📝", category: "Productivity", price: "$10/month", cancelUrl: "https://www.notion.so/my-account" },
+  { name: "Adobe Creative Cloud", icon: "🎨", category: "Software", price: "$54.99/month", cancelUrl: "https://account.adobe.com/" },
+  { name: "ChatGPT Plus", icon: "🤖", category: "AI Tools", price: "$20/month", cancelUrl: "https://chat.openai.com/#settings" },
+  { name: "Figma", icon: "🎨", category: "Software", price: "$12/month", cancelUrl: "https://www.figma.com/settings" },
+  { name: "Canva Pro", icon: "🖼️", category: "Software", price: "$12.99/month", cancelUrl: "https://www.canva.com/settings" },
+];
+
+// Helper map: serviceName -> object
+const popularServiceMap = Object.fromEntries(popularServices.map(s => [s.name, s]));
