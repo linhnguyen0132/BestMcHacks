@@ -20,8 +20,7 @@
             <div class="nav-links">
                 <a href="#how">How it works</a>
                 <a href="#features">Features</a>
-               <button class="btn-nav" onclick="loginWithGoogle()">Sign in</button>
-
+                <button class="btn-nav" onclick="showAuth('login')">Sign in</button>
             </div>
         </nav>
 
@@ -31,8 +30,9 @@
                 <h1>No more surprise charges</h1>
                 <p>Track your free trials, get reminders before they expire, and cancel with one click. Never pay for something you forgot about.</p>
                 <div class="hero-buttons">
-                    <button class="btn-primary btn-large" onclick="loginWithGoogle()">Get started free</button>
-                    <button class="btn-ghost" onclick="loginWithGoogle()">I have an account</button>
+                    <button class="btn-primary btn-large" onclick="showAuth('signup')">Get started free</button>
+                    <button class="btn-ghost" onclick="showAuth('login')">I have an account</button>
+                </div>
                 <div class="hero-stats">
                     <div class="stat">
                         <span class="stat-number">$x</span>
@@ -129,7 +129,7 @@
         <footer>
             <div class="footer-content">
                 <div class="footer-logo">FreeFromTrial</div>
-                <p>McHacks 2026</p>
+                <p>McHacks 2025z</p>
             </div>
         </footer>
     </div>
@@ -160,10 +160,9 @@
                     <span>or</span>
                 </div>
                 
-                <button class="btn-google" onclick="loginWithGoogle()">
-                <span>G</span> Continue with Google
+                <button class="btn-google">
+                    <span>G</span> Continue with Google
                 </button>
-
                 
                 <p class="auth-switch">
                     Don't have an account? <a onclick="showAuth('signup')">Sign up</a>
@@ -211,10 +210,9 @@
         <nav class="navbar dashboard-nav">
             <div class="logo">FreeFromTrial</div>
             <div class="nav-links">
-                <a href="#" class="nav-active" onclick="showSection('overview', event)">Dashboard</a>
-                <a href="#" onclick="showSection('subscriptions', event)">Subscriptions</a>
-                <a href="#" onclick="showSection('settings', event)">Settings</a>
-
+                <a href="#" class="nav-active" onclick="showSection('overview')">Dashboard</a>
+                <a href="#" onclick="showSection('subscriptions')">Subscriptions</a>
+                <a href="#" onclick="showSection('settings')">Settings</a>
                 <div class="user-menu">
                     <button class="user-btn" onclick="toggleUserMenu()">
                         <span class="user-avatar" id="userAvatar">JD</span>
@@ -222,7 +220,7 @@
                         <span class="dropdown-arrow">▼</span>
                     </button>
                     <div class="user-dropdown hidden" id="userDropdown">
-                        <a onclick="showSection('settings', event)">⚙️ Settings</a>
+                        <a onclick="showSection('settings')"> Settings</a>
                         <a onclick="logout()">🚪 Log out</a>
                     </div>
                 </div>
