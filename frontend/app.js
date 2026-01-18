@@ -3,6 +3,24 @@
 // ====== INITIALIZATION ======
 document.addEventListener('DOMContentLoaded', async function() {
   const me = await apiMe();
+  function initServiceDropdown() {
+  const select = document.getElementById("trialServiceSelect");
+  if (!select) return;
+
+  select.innerHTML = `
+    <option value="">Select a service…</option>
+    <option value="manual">Other (type manually)</option>
+  `;
+
+  // commonServices vient de data.js
+  Object.keys(commonServices).sort().forEach(service => {
+    const opt = document.createElement("option");
+    opt.value = service;
+    opt.textContent = `${commonServices[service].icon || "📱"} ${service}`;
+    select.appendChild(opt);
+  });
+}
+
   if (me) {
     currentUser = me;
     await refreshSubscriptionsFromDB();
@@ -11,6 +29,15 @@ document.addEventListener('DOMContentLoaded', async function() {
 
   const dateInput = document.getElementById('trialDate');
   if (dateInput) dateInput.min = new Date().toISOString().split('T')[0];
+});
+
+document.addEventListener('DOMContentLoaded', async function() {
+  const me = await apiMe();
+  if (me) {
+    currentUser = me;
+    showDashboard();
+  }
+  initServiceDropdown();
 });
 
 async function refreshSubscriptionsFromDB() {
@@ -216,6 +243,37 @@ function createTrialItem(sub) {
         </div>
     `;
 }
+function onServiceSelectChange() {
+  const select = document.getElementById("trialServiceSelect");
+  const manualInput = document.getElementById("trialName");
+  const priceInput = document.getElementById("trialPrice");
+  const urlInput = document.getElementById("trialUrl");
+
+  if (!select) return;
+
+  const value = select.value;
+
+  if (value === "manual" || value === "") {
+    // manual mode
+    manualInput.classList.remove("hidden");
+    manualInput.value = "";
+    // don't wipe user inputs if they already typed
+    return;
+  }
+
+  // Selected a known service
+  manualInput.classList.add("hidden");
+  manualInput.value = value;
+
+  // Auto-fill cancel URL
+  const svc = commonServices[value];
+  if (svc?.cancelUrl && urlInput) urlInput.value = svc.cancelUrl;
+
+  // OPTIONAL: auto-fill price (if you store it)
+  // If you don't have prices in commonServices yet, leave as is.
+  // Example:
+  // if (svc?.price && priceInput) priceInput.value = svc.price;
+}
 
 // ====== UPDATED: createSubscriptionCard with smart Cancel button ======
 function createSubscriptionCard(sub) {
@@ -344,8 +402,10 @@ function filterSubscriptions(searchTerm) {
 
 function openAddModal() {
     document.getElementById('addModal').classList.remove('hidden');
-    
-    document.getElementById('trialName').value = '';
+    document.getElementById('trialServiceSelect').value = "";
+    document.getElementById('trialName').classList.add("hidden");
+    document.getElementById('trialName').value = "";
+
     document.getElementById('trialDate').value = '';
     document.getElementById('trialPrice').value = '';
     document.getElementById('trialUrl').value = '';

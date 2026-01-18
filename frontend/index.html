@@ -391,7 +391,13 @@
             
             <div class="form-group">
                 <label>Service Name</label>
-                <input type="text" id="trialName" placeholder="Netflix, Spotify, etc.">
+                <select id="trialServiceSelect" onchange="onServiceSelectChange()">
+                <option value="">Select a service…</option>
+                <option value="manual">Other (type manually)</option>
+                </select>
+
+                <input type="text" id="trialName" placeholder="If Other, type service name" class="hidden">
+
             </div>
             <div class="form-group">
                 <label>Trial End Date</label>
