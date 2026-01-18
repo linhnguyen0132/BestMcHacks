@@ -10,6 +10,7 @@ from services.email_monitor.gmail_client import build_gmail_service_from_user
 from services.email_monitor.detector import is_trial_candidate
 from services.email_monitor.queries import TRIAL_QUERY_V1
 
+
 def _headers(payload: Dict[str, Any]) -> Dict[str, str]:
     out = {}
     for h in (payload or {}).get("headers", []):
