@@ -17,7 +17,7 @@ GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 GOOGLE_REDIRECT_URI = os.environ.get(
     "GOOGLE_REDIRECT_URI", 
-    "http://localhost:8000/oauth/google/callback"
+    "http://localhost:8080/oauth/google/callback"
 )
 
 if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
