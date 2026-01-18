@@ -13,12 +13,10 @@ from core.auth import create_session
 router = APIRouter(prefix="/oauth", tags=["oauth"])
 
 # Get OAuth config from environment
-GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
-GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
-GOOGLE_REDIRECT_URI = os.environ.get(
-    "GOOGLE_REDIRECT_URI", 
-    "http://localhost:8080/oauth/google/callback"
-)
+GOOGLE_CLIENT_ID = os.environ["GOOGLE_CLIENT_ID"]
+GOOGLE_CLIENT_SECRET = os.environ["GOOGLE_CLIENT_SECRET"]
+GOOGLE_REDIRECT_URI = os.environ["GOOGLE_REDIRECT_URI"]
+
 
 if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
     raise RuntimeError("GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET required")
