@@ -85,3 +85,5 @@ app.include_router(oauth_router)   # ✅ NEW
 app.include_router(auth_router)    # ✅ NEW
 app.include_router(trials_router)
 app.include_router(webhooks_router)
+from routes.jobs import router as jobs_router
+app.include_router(jobs_router)
