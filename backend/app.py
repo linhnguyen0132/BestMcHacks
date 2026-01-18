@@ -42,10 +42,9 @@ if not SECRET_KEY:
 
 app.add_middleware(
     SessionMiddleware,
-    secret_key=SECRET_KEY,
-    max_age=30 * 24 * 60 * 60,
+    secret_key=os.environ["SESSION_SECRET"],
     same_site="lax",
-    https_only=os.environ.get("ENVIRONMENT", "").lower() == "production"
+    https_only=True,
 )
 
 
