@@ -1,28 +1,10 @@
 // ====== APP.JS - FreeFromTrial (UPDATED) ======
 
 // ====== INITIALIZATION ======
-document.addEventListener('DOMContentLoaded', async function () {
-  // init dropdown (même sans login)
-  initServiceDropdown();
 
-  // Set min date
-  const dateInput = document.getElementById('trialDate');
-  if (dateInput) dateInput.min = new Date().toISOString().split('T')[0];
-
-  // Auth check
+document.addEventListener('DOMContentLoaded', async function() {
   const me = await apiMe();
-  if (me) {
-    currentUser = me;
-
-    // si tu veux la DB au lieu de data.js
-    if (typeof refreshSubscriptionsFromDB === "function") {
-      await refreshSubscriptionsFromDB();
-    }
-
-    showDashboard();
-  }
-});
-function initServiceDropdown() {
+  function initServiceDropdown() {
   const select = document.getElementById("trialServiceSelect");
   if (!select) return;
 
@@ -40,35 +22,24 @@ function initServiceDropdown() {
   });
 }
 
-
-function onServiceSelectChange() {
-  const select = document.getElementById("trialServiceSelect");
-  const nameInput = document.getElementById("trialName");
-  const priceInput = document.getElementById("trialPrice");
-  const urlInput = document.getElementById("trialUrl");
-
-  if (!select) return;
-  const value = select.value;
-
-  if (!value || value === "manual") {
-    // en mode manuel, tu laisses trialName editable
-    nameInput.disabled = false;
-    if (value === "manual") nameInput.value = "";
-    return;
+  if (me) {
+    currentUser = me;
+    await refreshSubscriptionsFromDB();
+    showDashboard();
   }
 
-  // service choisi => auto-fill
-  nameInput.disabled = true;
-  nameInput.value = value;
+  const dateInput = document.getElementById('trialDate');
+  if (dateInput) dateInput.min = new Date().toISOString().split('T')[0];
+});
 
-  const svc = commonServices[value];
-  if (svc?.cancelUrl) urlInput.value = svc.cancelUrl;
-
-}
-
-
-
-
+document.addEventListener('DOMContentLoaded', async function() {
+  const me = await apiMe();
+  if (me) {
+    currentUser = me;
+    showDashboard();
+  }
+  initServiceDropdown();
+});
 
 // ====== AUTH FUNCTIONS ======
 
