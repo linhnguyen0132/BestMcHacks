@@ -1301,4 +1301,69 @@ footer {
     .settings-grid {
         grid-template-columns: 1fr;
     }
+
+    /* ====== ADDITIONAL CSS FOR DISABLED BUTTON ====== */
+/* Add this to the end of your style.css file */
+
+/* Disabled Button Style */
+.btn-disabled {
+    background: var(--bg-hover);
+    color: var(--text-muted);
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    font-weight: 500;
+    font-size: 0.95rem;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.btn-disabled:hover {
+    /* No hover effect for disabled buttons */
+    background: var(--bg-hover);
+    transform: none;
+    box-shadow: none;
+}
+
+/* Tooltip for disabled button */
+.btn-disabled[title] {
+    position: relative;
+}
+
+/* Optional: Better tooltip on hover */
+.btn-disabled:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-dark);
+    color: var(--text-primary);
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    white-space: nowrap;
+    margin-bottom: 0.5rem;
+    z-index: 100;
+    box-shadow: var(--shadow-md);
+}
+
+/* Small arrow for tooltip */
+.btn-disabled:hover::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: var(--bg-dark);
+    margin-bottom: -6px;
+    z-index: 100;
+}
+
+/* Responsive adjustment for small trial action buttons */
+.trial-actions .btn-disabled {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+}
 }

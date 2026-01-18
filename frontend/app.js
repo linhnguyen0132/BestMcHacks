@@ -1,11 +1,11 @@
-// ====== APP.JS - FreeFromTrial ======
+// ====== APP.JS - FreeFromTrial (UPDATED) ======
 
 // ====== INITIALIZATION ======
 document.addEventListener('DOMContentLoaded', async function() {
   const me = await apiMe();
   if (me) {
     currentUser = me;
-    await refreshSubscriptionsFromDB();   // ✅ NEW
+    await refreshSubscriptionsFromDB();
     showDashboard();
   }
 
@@ -15,11 +15,11 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 async function refreshSubscriptionsFromDB() {
   try {
-    const docs = await apiGetTrials();           // backend docs
+    const docs = await apiGetTrials();
     subscriptions = docs.map(trialDocToSubscription);
   } catch (e) {
     console.error("refreshSubscriptionsFromDB error:", e);
-    subscriptions = []; // fallback
+    subscriptions = [];
   }
 }
 
@@ -50,20 +50,17 @@ function login() {
     const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value;
     
-    // Basic validation
     if (!email || !password) {
         alert('Please fill in all fields');
         return;
     }
     
-    // Fake login - in real app, this would call the backend
     currentUser = {
         id: 1,
         name: email.split('@')[0],
         email: email
     };
     
-    // Save to localStorage
     localStorage.setItem('fftUser', JSON.stringify(currentUser));
     
     hideAuth();
@@ -75,7 +72,6 @@ function signup() {
     const email = document.getElementById('signupEmail').value.trim();
     const password = document.getElementById('signupPassword').value;
     
-    // Basic validation
     if (!name || !email || !password) {
         alert('Please fill in all fields');
         return;
@@ -86,14 +82,12 @@ function signup() {
         return;
     }
     
-    // Fake signup - in real app, this would call the backend
     currentUser = {
         id: Date.now(),
         name: name,
         email: email
     };
     
-    // Save to localStorage
     localStorage.setItem('fftUser', JSON.stringify(currentUser));
     
     hideAuth();
@@ -101,7 +95,7 @@ function signup() {
 }
 
 async function logout() {
-    await logoutAPI(); // ✅ NEW (ignore errors)
+    await logoutAPI();
 
     currentUser = null;
     localStorage.removeItem('fftUser');
@@ -115,29 +109,22 @@ async function logout() {
 // ====== DASHBOARD FUNCTIONS ======
 
 function showDashboard() {
-    // Hide landing page
     document.getElementById('landingPage').classList.add('hidden');
-    
-    // Show dashboard
     document.getElementById('dashboard').classList.remove('hidden');
     
-    // Update user info in navbar
     if (currentUser) {
         const initials = currentUser.name.split(' ').map(n => n[0]).join('').toUpperCase();
         document.getElementById('userAvatar').textContent = initials.slice(0, 2);
         document.getElementById('userName').textContent = currentUser.name.split(' ')[0];
         
-        // Update settings
         document.getElementById('settingsName').value = currentUser.name;
         document.getElementById('settingsEmail').value = currentUser.email;
     }
     
-    // Render dashboard data
     renderDashboard();
 }
 
 function renderDashboard() {
-    // Update stats
     const activeTrials = subscriptions.filter(s => s.status !== 'cancelled');
     const urgentTrials = subscriptions.filter(s => s.status === 'urgent');
     const cancelledTrials = subscriptions.filter(s => s.status === 'cancelled');
@@ -147,13 +134,8 @@ function renderDashboard() {
     document.getElementById('cancelledTrials').textContent = cancelledTrials.length;
     document.getElementById('moneySaved').textContent = '$' + calculateSavings().toFixed(2);
     
-    // Render urgent list
     renderUrgentList();
-    
-    // Render upcoming list
     renderUpcomingList();
-    
-    // Render all subscriptions
     renderAllSubscriptions();
 }
 
@@ -194,10 +176,33 @@ function renderUpcomingList() {
     list.innerHTML = upcoming.map(sub => createTrialItem(sub)).join('');
 }
 
+// ====== UPDATED: createTrialItem with smart Cancel button ======
 function createTrialItem(sub) {
     const expiryText = sub.status === 'cancelled' 
         ? 'Cancelled' 
         : `${sub.expiresIn} day${sub.expiresIn !== 1 ? 's' : ''} left • ${sub.price}`;
+    
+    // Check if cancelUrl exists and is valid
+    const hasCancelUrl = sub.cancelUrl && sub.cancelUrl !== '#' && sub.cancelUrl !== '';
+    
+    let cancelButton = '';
+    if (sub.status !== 'cancelled') {
+        if (hasCancelUrl) {
+            // Has cancel URL → show clickable button that opens link AND offers to mark as cancelled
+            cancelButton = `
+                <div class="trial-actions">
+                    <button class="btn-primary" onclick="openCancelLink('${sub.id}', '${sub.cancelUrl}')">Cancel</button>
+                </div>
+            `;
+        } else {
+            // No cancel URL → show disabled button with tooltip
+            cancelButton = `
+                <div class="trial-actions">
+                    <button class="btn-disabled" disabled title="No cancellation link available">No link</button>
+                </div>
+            `;
+        }
+    }
     
     return `
         <div class="trial-item">
@@ -207,51 +212,41 @@ function createTrialItem(sub) {
                 <p>${expiryText}</p>
             </div>
             <span class="trial-status ${sub.status}">${statusLabels[sub.status]}</span>
-            ${sub.status !== 'cancelled' ? `
-                <div class="trial-actions">
-                    <a href="${sub.cancelUrl}" target="_blank" class="btn-primary" style="text-decoration:none;">Cancel</a>
-                </div>
-            ` : ''}
+            ${cancelButton}
         </div>
     `;
 }
 
-function renderAllSubscriptions(filter = 'all', search = '') {
-    const list = document.getElementById('allSubscriptionsList');
-    
-    let filtered = subscriptions;
-    
-    // Apply status filter
-    if (filter !== 'all') {
-        filtered = filtered.filter(s => s.status === filter);
-    }
-    
-    // Apply search filter
-    if (search) {
-        const searchLower = search.toLowerCase();
-        filtered = filtered.filter(s => 
-            s.name.toLowerCase().includes(searchLower) ||
-            s.category?.toLowerCase().includes(searchLower)
-        );
-    }
-    
-    if (filtered.length === 0) {
-        list.innerHTML = `
-            <div class="empty-state" style="grid-column: 1/-1;">
-                <div class="empty-icon">🔍</div>
-                <p>No subscriptions found</p>
-            </div>
-        `;
-        return;
-    }
-    
-    list.innerHTML = filtered.map(sub => createSubscriptionCard(sub)).join('');
-}
-
+// ====== UPDATED: createSubscriptionCard with smart Cancel button ======
 function createSubscriptionCard(sub) {
     const expiryText = sub.status === 'cancelled' 
         ? 'Cancelled' 
         : formatDate(sub.expiryDate);
+    
+    // Check if cancelUrl exists and is valid
+    const hasCancelUrl = sub.cancelUrl && sub.cancelUrl !== '#' && sub.cancelUrl !== '';
+    
+    let actionButtons = '';
+    if (sub.status !== 'cancelled') {
+        if (hasCancelUrl) {
+            // Has cancel URL → two buttons
+            actionButtons = `
+                <button class="btn-primary" onclick="openCancelLink('${sub.id}', '${sub.cancelUrl}')">Cancel</button>
+                <button class="btn-secondary" onclick="markCancelled('${sub.id}')">Mark Cancelled</button>
+            `;
+        } else {
+            // No cancel URL → disabled cancel button + mark cancelled button
+            actionButtons = `
+                <button class="btn-disabled" disabled title="No cancellation link available">No cancel link</button>
+                <button class="btn-secondary" onclick="markCancelled('${sub.id}')">Mark Cancelled</button>
+            `;
+        }
+    } else {
+        // Already cancelled → just show remove button
+        actionButtons = `
+            <button class="btn-secondary" onclick="deleteTrial('${sub.id}')">Remove</button>
+        `;
+    }
     
     return `
         <div class="subscription-card">
@@ -278,36 +273,39 @@ function createSubscriptionCard(sub) {
                 </div>
             </div>
             <div class="subscription-actions">
-                ${sub.status !== 'cancelled' ? `
-                    <a href="${sub.cancelUrl}" target="_blank" class="btn-primary" style="text-decoration:none;">Cancel</a>
-                    <button class="btn-secondary" onclick="markCancelled('${sub.id}')">Mark Cancelled</button>
-                ` : `
-                    <button class="btn-secondary" onclick="deleteTrial('${sub.id}')">Remove</button>
-
-                `}
+                ${actionButtons}
             </div>
         </div>
     `;
 }
 
+// ====== NEW: Function to open cancel link and ask to mark as cancelled ======
+function openCancelLink(id, url) {
+    // Open the cancellation page in a new tab
+    window.open(url, '_blank');
+    
+    // Ask user if they want to mark it as cancelled
+    setTimeout(() => {
+        if (confirm('Did you cancel the subscription?\n\nClick OK to mark it as cancelled in your dashboard.')) {
+            markCancelled(id);
+        }
+    }, 500); // Small delay so the new tab opens first
+}
+
 // ====== NAVIGATION ======
 
 function showSection(section) {
-    // Hide all sections
     document.getElementById('overviewSection').classList.add('hidden');
     document.getElementById('subscriptionsSection').classList.add('hidden');
     document.getElementById('settingsSection').classList.add('hidden');
     
-    // Show selected section
     document.getElementById(section + 'Section').classList.remove('hidden');
     
-    // Update nav active state
     document.querySelectorAll('.dashboard-nav .nav-links a').forEach(a => {
         a.classList.remove('nav-active');
     });
     event.target.classList.add('nav-active');
     
-    // Close user dropdown
     document.getElementById('userDropdown').classList.add('hidden');
 }
 
@@ -316,7 +314,6 @@ function toggleUserMenu() {
     dropdown.classList.toggle('hidden');
 }
 
-// Close dropdown when clicking outside
 document.addEventListener('click', function(e) {
     const userMenu = document.querySelector('.user-menu');
     const dropdown = document.getElementById('userDropdown');
@@ -329,13 +326,11 @@ document.addEventListener('click', function(e) {
 // ====== FILTER FUNCTIONS ======
 
 function filterByStatus(status) {
-    // Update active tab
     document.querySelectorAll('.filter-tab').forEach(tab => {
         tab.classList.remove('active');
     });
     event.target.classList.add('active');
     
-    // Re-render with filter
     renderAllSubscriptions(status);
 }
 
@@ -350,7 +345,6 @@ function filterSubscriptions(searchTerm) {
 function openAddModal() {
     document.getElementById('addModal').classList.remove('hidden');
     
-    // Clear form
     document.getElementById('trialName').value = '';
     document.getElementById('trialDate').value = '';
     document.getElementById('trialPrice').value = '';
@@ -363,7 +357,7 @@ function closeAddModal() {
 
 async function addTrial() {
   const name = document.getElementById('trialName').value.trim();
-  const date = document.getElementById('trialDate').value; // YYYY-MM-DD
+  const date = document.getElementById('trialDate').value;
   const priceText = document.getElementById('trialPrice').value.trim();
   const url = document.getElementById('trialUrl').value.trim();
 
@@ -372,7 +366,6 @@ async function addTrial() {
     return;
   }
 
-  // Convert "$9.99/month" -> 9.99
   let renewalPrice = null;
   if (priceText) {
     const num = parseFloat(priceText.replace(/[^0-9.]/g, ""));
@@ -401,7 +394,7 @@ async function addTrial() {
 
 async function markCancelled(id) {
   try {
-    await apiPatchTrial(id, { status: "canceled" }); // backend expects "canceled"
+    await apiPatchTrial(id, { status: "canceled" });
     await refreshSubscriptionsFromDB();
     renderDashboard();
     showToast("Marked as cancelled!");
@@ -439,10 +432,8 @@ function saveProfile() {
     currentUser.name = name;
     currentUser.email = email;
     
-    // Update localStorage
     localStorage.setItem('fftUser', JSON.stringify(currentUser));
     
-    // Update navbar
     const initials = name.split(' ').map(n => n[0]).join('').toUpperCase();
     document.getElementById('userAvatar').textContent = initials.slice(0, 2);
     document.getElementById('userName').textContent = name.split(' ')[0];
@@ -459,13 +450,45 @@ function deleteAccount() {
     }
 }
 
+// ====== RENDER ALL SUBSCRIPTIONS ======
+
+function renderAllSubscriptions(filter = 'all', search = '') {
+    const list = document.getElementById('allSubscriptionsList');
+    
+    let filtered = subscriptions;
+    
+    if (filter !== 'all') {
+        filtered = filtered.filter(s => s.status === filter);
+    }
+    
+    if (search) {
+        const searchLower = search.toLowerCase();
+        filtered = filtered.filter(s => 
+            s.name.toLowerCase().includes(searchLower) ||
+            s.category?.toLowerCase().includes(searchLower)
+        );
+    }
+    
+    if (filtered.length === 0) {
+        list.innerHTML = `
+            <div class="empty-state" style="grid-column: 1/-1;">
+                <div class="empty-icon">🔍</div>
+                <p>No subscriptions found</p>
+            </div>
+        `;
+        return;
+    }
+    
+    list.innerHTML = filtered.map(sub => createSubscriptionCard(sub)).join('');
+}
+
 // ====== MINIMAL BACKEND AUTH HOOKS ======
 
 async function apiMe() {
   try {
     const res = await fetch("/api/auth/me", { credentials: "include" });
     if (!res.ok) return null;
-    return await res.json(); // {id,email,name,picture}
+    return await res.json();
   } catch (e) {
     console.error("apiMe error:", e);
     return null;
@@ -473,7 +496,6 @@ async function apiMe() {
 }
 
 function loginWithGoogle() {
-  // IMPORTANT: DO backend is mounted at /api
   window.location.href = "/api/oauth/google";
 }
 
@@ -491,11 +513,9 @@ async function logoutAPI() {
 // ====== TOAST NOTIFICATIONS ======
 
 function showToast(message) {
-    // Remove existing toast
     const existing = document.querySelector('.toast');
     if (existing) existing.remove();
     
-    // Create toast
     const toast = document.createElement('div');
     toast.className = 'toast';
     toast.textContent = message;
@@ -515,14 +535,12 @@ function showToast(message) {
     
     document.body.appendChild(toast);
     
-    // Remove after 3 seconds
     setTimeout(() => {
         toast.style.animation = 'toastOut 0.3s ease';
         setTimeout(() => toast.remove(), 300);
     }, 3000);
 }
 
-// Add toast animations to document
 const toastStyles = document.createElement('style');
 toastStyles.textContent = `
     @keyframes toastIn {
@@ -535,6 +553,8 @@ toastStyles.textContent = `
     }
 `;
 document.head.appendChild(toastStyles);
+
+// ====== API FUNCTIONS ======
 
 async function apiGetTrials() {
   const res = await fetch("/api/trials", { credentials: "include" });
@@ -572,16 +592,15 @@ async function apiDeleteTrial(id) {
   if (!res.ok) throw new Error(await res.text());
   return await res.json();
 }
+
 function money(n) {
   if (n === null || n === undefined) return "Unknown";
-  // simple: CAD par défaut
   return `$${Number(n).toFixed(2)}/month`;
 }
 
 function backendStatusToUiStatus(backendStatus, daysLeft) {
-  // backend: detected|confirmed|canceled|expired
   if (backendStatus === "canceled" || backendStatus === "expired") return "cancelled";
-  return calculateStatus(daysLeft); // urgent/warning/safe
+  return calculateStatus(daysLeft);
 }
 
 function guessIconFromName(name) {
@@ -593,7 +612,7 @@ function guessIconFromName(name) {
 }
 
 function trialDocToSubscription(doc) {
-  const expiryISO = doc.endDate; // ISO string from backend
+  const expiryISO = doc.endDate;
   const daysLeft = daysUntil(expiryISO);
 
   return {
@@ -604,89 +623,8 @@ function trialDocToSubscription(doc) {
     expiryDate: expiryISO,
     status: backendStatusToUiStatus(doc.status, daysLeft),
     price: money(doc.renewalPrice),
-    cancelUrl: doc.cancelUrl || "#",
+    cancelUrl: doc.cancelUrl || "",
     category: "Subscription",
-    _backendStatus: doc.status, // optional debug
+    _backendStatus: doc.status,
   };
 }
-
-// ====== API FUNCTIONS (FOR LATER) ======
-
-/*
-// When backend is ready, replace fake functions with these:
-
-async function loginAPI(email, password) {
-    try {
-        const response = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-        });
-        return await response.json();
-    } catch (error) {
-        console.error('Login error:', error);
-        return null;
-    }
-}
-
-async function signupAPI(name, email, password) {
-    try {
-        const response = await fetch('/api/auth/signup', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, email, password })
-        });
-        return await response.json();
-    } catch (error) {
-        console.error('Signup error:', error);
-        return null;
-    }
-}
-
-async function getSubscriptions() {
-    try {
-        const response = await fetch('/api/subscriptions', {
-            headers: { 'Authorization': 'Bearer ' + getToken() }
-        });
-        return await response.json();
-    } catch (error) {
-        console.error('Error fetching subscriptions:', error);
-        return [];
-    }
-}
-
-async function addSubscriptionAPI(subscription) {
-    try {
-        const response = await fetch('/api/subscriptions', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + getToken()
-            },
-            body: JSON.stringify(subscription)
-        });
-        return await response.json();
-    } catch (error) {
-        console.error('Error adding subscription:', error);
-        return null;
-    }
-}
-
-// Gumloop API for email scanning
-async function scanEmailsWithGumloop(email) {
-    try {
-        const response = await fetch('https://api.gumloop.com/...', {
-            method: 'POST',
-            headers: {
-                'Authorization': 'Bearer YOUR_GUMLOOP_API_KEY',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ email })
-        });
-        return await response.json();
-    } catch (error) {
-        console.error('Gumloop error:', error);
-        return null;
-    }
-}
-*/
