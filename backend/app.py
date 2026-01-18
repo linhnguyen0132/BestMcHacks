@@ -9,7 +9,7 @@ from routes.health import router as health_router
 from routes.trials import router as trials_router
 from routes.oauth import router as oauth_router
 from routes.auth import router as auth_router
-#from routes.webhooks import router as webhooks_router
+from routes.webhooks import router as webhooks_router
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Handle startup and shutdown events"""
@@ -84,4 +84,4 @@ app.include_router(health_router)
 app.include_router(oauth_router)   # ✅ NEW
 app.include_router(auth_router)    # ✅ NEW
 app.include_router(trials_router)
-#app.include_router(webhooks_router)
+app.include_router(webhooks_router)
