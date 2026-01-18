@@ -1,14 +1,14 @@
 // ====== APP.JS - FreeFromTrial ======
 
 // ====== INITIALIZATION ======
-document.addEventListener('DOMContentLoaded', function() {
-    // Check if user is logged in (fake - using localStorage)
-    const savedUser = localStorage.getItem('fftUser');
-    if (savedUser) {
-        currentUser = JSON.parse(savedUser);
+document.addEventListener('DOMContentLoaded', async function() {
+    // ✅ Check if user is logged in via backend session
+    const me = await apiMe();
+    if (me) {
+        currentUser = me; // {id,email,name,picture}
         showDashboard();
     }
-    
+
     // Set min date for trial date input
     const dateInput = document.getElementById('trialDate');
     if (dateInput) {
@@ -92,17 +92,17 @@ function signup() {
     showDashboard();
 }
 
-function logout() {
+async function logout() {
+    await logoutAPI(); // ✅ NEW (ignore errors)
+
     currentUser = null;
     localStorage.removeItem('fftUser');
-    
-    // Hide dashboard, show landing
+
     document.getElementById('dashboard').classList.add('hidden');
     document.getElementById('landingPage').classList.remove('hidden');
-    
-    // Close dropdown if open
     document.getElementById('userDropdown').classList.add('hidden');
 }
+
 
 // ====== DASHBOARD FUNCTIONS ======
 
@@ -452,6 +452,35 @@ function deleteAccount() {
             showToast('Account deleted');
         }
     }
+}
+
+// ====== MINIMAL BACKEND AUTH HOOKS ======
+
+async function apiMe() {
+  try {
+    const res = await fetch("/api/auth/me", { credentials: "include" });
+    if (!res.ok) return null;
+    return await res.json(); // {id,email,name,picture}
+  } catch (e) {
+    console.error("apiMe error:", e);
+    return null;
+  }
+}
+
+function loginWithGoogle() {
+  // IMPORTANT: DO backend is mounted at /api
+  window.location.href = "/api/oauth/google";
+}
+
+async function logoutAPI() {
+  try {
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      credentials: "include",
+    });
+  } catch (e) {
+    console.warn("logoutAPI error:", e);
+  }
 }
 
 // ====== TOAST NOTIFICATIONS ======

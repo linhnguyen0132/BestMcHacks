@@ -20,7 +20,8 @@
             <div class="nav-links">
                 <a href="#how">How it works</a>
                 <a href="#features">Features</a>
-                <button class="btn-nav" onclick="showAuth('login')">Sign in</button>
+                <button class="btn-nav" onclick="loginWithGoogle()">Sign in</button>
+
             </div>
         </nav>
 
@@ -160,9 +161,10 @@
                     <span>or</span>
                 </div>
                 
-                <button class="btn-google">
+                <button class="btn-google" onclick="loginWithGoogle()">
                     <span>G</span> Continue with Google
                 </button>
+
                 
                 <p class="auth-switch">
                     Don't have an account? <a onclick="showAuth('signup')">Sign up</a>
