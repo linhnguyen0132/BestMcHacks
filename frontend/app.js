@@ -2,19 +2,27 @@
 
 // ====== INITIALIZATION ======
 document.addEventListener('DOMContentLoaded', async function() {
-    // ✅ Check if user is logged in via backend session
-    const me = await apiMe();
-    if (me) {
-        currentUser = me; // {id,email,name,picture}
-        showDashboard();
-    }
+  const me = await apiMe();
+  if (me) {
+    currentUser = me;
+    await refreshSubscriptionsFromDB();   // ✅ NEW
+    showDashboard();
+  }
 
-    // Set min date for trial date input
-    const dateInput = document.getElementById('trialDate');
-    if (dateInput) {
-        dateInput.min = new Date().toISOString().split('T')[0];
-    }
+  const dateInput = document.getElementById('trialDate');
+  if (dateInput) dateInput.min = new Date().toISOString().split('T')[0];
 });
+
+async function refreshSubscriptionsFromDB() {
+  try {
+    const docs = await apiGetTrials();           // backend docs
+    subscriptions = docs.map(trialDocToSubscription);
+  } catch (e) {
+    console.error("refreshSubscriptionsFromDB error:", e);
+    subscriptions = []; // fallback
+  }
+}
+
 
 // ====== AUTH FUNCTIONS ======
 
@@ -272,9 +280,10 @@ function createSubscriptionCard(sub) {
             <div class="subscription-actions">
                 ${sub.status !== 'cancelled' ? `
                     <a href="${sub.cancelUrl}" target="_blank" class="btn-primary" style="text-decoration:none;">Cancel</a>
-                    <button class="btn-secondary" onclick="markCancelled(${sub.id})">Mark Cancelled</button>
+                    <button class="btn-secondary" onclick="markCancelled('${sub.id}')">Mark Cancelled</button>
                 ` : `
-                    <button class="btn-secondary" onclick="deleteTrial(${sub.id})">Remove</button>
+                    <button class="btn-secondary" onclick="deleteTrial('${sub.id}')">Remove</button>
+
                 `}
             </div>
         </div>
@@ -352,72 +361,68 @@ function closeAddModal() {
     document.getElementById('addModal').classList.add('hidden');
 }
 
-function addTrial() {
-    const name = document.getElementById('trialName').value.trim();
-    const date = document.getElementById('trialDate').value;
-    const price = document.getElementById('trialPrice').value.trim() || 'Unknown';
-    const url = document.getElementById('trialUrl').value.trim() || '#';
-    
-    if (!name || !date) {
-        alert('Please enter a service name and expiry date');
-        return;
-    }
-    
-    // Calculate days until expiry
-    const daysLeft = daysUntil(date);
-    
-    // Get icon from common services or default
-    let icon = '📱';
-    const serviceName = name.toLowerCase();
-    for (const [service, data] of Object.entries(commonServices)) {
-        if (serviceName.includes(service.toLowerCase())) {
-            icon = data.icon;
-            break;
-        }
-    }
-    
-    // Create new subscription
-    const newSub = {
-        id: Date.now(),
-        name: name,
-        icon: icon,
-        expiresIn: daysLeft,
-        expiryDate: date,
-        status: calculateStatus(daysLeft),
-        price: price.startsWith('$') ? price : '$' + price,
-        cancelUrl: url,
-        category: 'Subscription'
-    };
-    
-    // Add to array
-    subscriptions.unshift(newSub);
-    
-    // Close modal and refresh
+async function addTrial() {
+  const name = document.getElementById('trialName').value.trim();
+  const date = document.getElementById('trialDate').value; // YYYY-MM-DD
+  const priceText = document.getElementById('trialPrice').value.trim();
+  const url = document.getElementById('trialUrl').value.trim();
+
+  if (!name || !date) {
+    alert('Please enter a service name and expiry date');
+    return;
+  }
+
+  // Convert "$9.99/month" -> 9.99
+  let renewalPrice = null;
+  if (priceText) {
+    const num = parseFloat(priceText.replace(/[^0-9.]/g, ""));
+    renewalPrice = Number.isFinite(num) ? num : null;
+  }
+
+  try {
+    await apiCreateTrial({
+      serviceName: name,
+      endDate: date,
+      cancelUrl: url || null,
+      renewalPrice: renewalPrice
+    });
+
+    await refreshSubscriptionsFromDB();
     closeAddModal();
     renderDashboard();
-    
-    // Show confirmation
     showToast(`${name} added successfully!`);
+  } catch (e) {
+    console.error(e);
+    alert("Failed to add trial: " + e.message);
+  }
 }
 
 // ====== TRIAL ACTIONS ======
 
-function markCancelled(id) {
-    const sub = subscriptions.find(s => s.id === id);
-    if (sub) {
-        sub.status = 'cancelled';
-        sub.expiresIn = -1;
-        renderDashboard();
-        showToast(`${sub.name} marked as cancelled!`);
-    }
+async function markCancelled(id) {
+  try {
+    await apiPatchTrial(id, { status: "canceled" }); // backend expects "canceled"
+    await refreshSubscriptionsFromDB();
+    renderDashboard();
+    showToast("Marked as cancelled!");
+  } catch (e) {
+    console.error(e);
+    alert("Failed to cancel: " + e.message);
+  }
 }
 
-function deleteTrial(id) {
-    if (confirm('Are you sure you want to remove this subscription?')) {
-        subscriptions = subscriptions.filter(s => s.id !== id);
-        renderDashboard();
-        showToast('Subscription removed');
-    }
+async function deleteTrial(id) {
+  if (!confirm('Are you sure you want to remove this subscription?')) return;
+
+  try {
+    await apiDeleteTrial(id);
+    await refreshSubscriptionsFromDB();
+    renderDashboard();
+    showToast('Subscription removed');
+  } catch (e) {
+    console.error(e);
+    alert("Failed to delete: " + e.message);
+  }
 }
 
 // ====== SETTINGS FUNCTIONS ======
@@ -530,6 +535,80 @@ toastStyles.textContent = `
     }
 `;
 document.head.appendChild(toastStyles);
+
+async function apiGetTrials() {
+  const res = await fetch("/api/trials", { credentials: "include" });
+  if (!res.ok) throw new Error(await res.text());
+  return await res.json();
+}
+
+async function apiCreateTrial(trial) {
+  const res = await fetch("/api/trials", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(trial),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return await res.json();
+}
+
+async function apiPatchTrial(id, patch) {
+  const res = await fetch(`/api/trials/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(patch),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return await res.json();
+}
+
+async function apiDeleteTrial(id) {
+  const res = await fetch(`/api/trials/${id}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return await res.json();
+}
+function money(n) {
+  if (n === null || n === undefined) return "Unknown";
+  // simple: CAD par défaut
+  return `$${Number(n).toFixed(2)}/month`;
+}
+
+function backendStatusToUiStatus(backendStatus, daysLeft) {
+  // backend: detected|confirmed|canceled|expired
+  if (backendStatus === "canceled" || backendStatus === "expired") return "cancelled";
+  return calculateStatus(daysLeft); // urgent/warning/safe
+}
+
+function guessIconFromName(name) {
+  const lower = (name || "").toLowerCase();
+  for (const [service, data] of Object.entries(commonServices)) {
+    if (lower.includes(service.toLowerCase())) return data.icon;
+  }
+  return "📱";
+}
+
+function trialDocToSubscription(doc) {
+  const expiryISO = doc.endDate; // ISO string from backend
+  const daysLeft = daysUntil(expiryISO);
+
+  return {
+    id: doc._id,
+    name: doc.serviceName,
+    icon: guessIconFromName(doc.serviceName),
+    expiresIn: daysLeft,
+    expiryDate: expiryISO,
+    status: backendStatusToUiStatus(doc.status, daysLeft),
+    price: money(doc.renewalPrice),
+    cancelUrl: doc.cancelUrl || "#",
+    category: "Subscription",
+    _backendStatus: doc.status, // optional debug
+  };
+}
 
 // ====== API FUNCTIONS (FOR LATER) ======
 
