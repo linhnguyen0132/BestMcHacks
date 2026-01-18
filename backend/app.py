@@ -43,10 +43,11 @@ if not SECRET_KEY:
 app.add_middleware(
     SessionMiddleware,
     secret_key=SECRET_KEY,
-    max_age=30 * 24 * 60 * 60,  # 30 days
+    max_age=30 * 24 * 60 * 60,
     same_site="lax",
-    https_only=os.environ.get("ENVIRONMENT") == "production"
+    https_only=os.environ.get("ENVIRONMENT", "").lower() == "production"
 )
+
 
 # 2. CORS middleware
 ALLOWED_ORIGINS = os.environ.get(

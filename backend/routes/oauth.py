@@ -137,4 +137,4 @@ async def google_oauth_callback(request: Request, code: str, state: str):
     
     # Redirect to frontend (change this to your frontend URL)
     frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")
-    return RedirectResponse(url=f"{frontend_url}/dashboard")
+    return RedirectResponse(url=f"{frontend_url}/")
