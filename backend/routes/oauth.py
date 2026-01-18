@@ -136,5 +136,5 @@ async def google_oauth_callback(request: Request, code: str, state: str):
     create_session(request, user_id, user_info["email"])
     
     # Redirect to frontend (change this to your frontend URL)
-    frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")
+    frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:8080")
     return RedirectResponse(url=f"{frontend_url}/")

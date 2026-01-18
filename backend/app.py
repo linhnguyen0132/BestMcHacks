@@ -52,7 +52,8 @@ app.add_middleware(
 # 2. CORS middleware
 ALLOWED_ORIGINS = os.environ.get(
     "ALLOWED_ORIGINS", 
-    "http://localhost:3000,http://localhost:5173"
+    "http://localhost:" \
+    "3000,http://localhost:5173"
 ).split(",")
 
 app.add_middleware(
