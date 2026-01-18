@@ -1,4 +1,4 @@
-# BestMcHacks
+# BestMcHacks(imo)
 McHacks 2026
 
 🚀 **Free From Trial (FFT)**
