@@ -11,5 +11,4 @@ async def health():
 async def health_db():
     db = get_db()
     await db.command("ping")
-    cols = await db.list_collection_names()
-    return {"mongo": "connected", "collections": cols}
+    return {"mongo": "connected"}
