@@ -69,7 +69,7 @@ const serviceIcons = {
 };
 
 // Common services with their cancel URLs
-const popularServices = [
+const commonServices = [
   { name: "Netflix", icon: "🎬", category: "Entertainment", price: "$15.99/month", cancelUrl: "https://www.netflix.com/YourAccount" },
   { name: "Spotify Premium", icon: "🎵", category: "Music", price: "$10.99/month", cancelUrl: "https://www.spotify.com/account/" },
   { name: "Disney+", icon: "🏰", category: "Entertainment", price: "$11.99/month", cancelUrl: "https://www.disneyplus.com/account" },
@@ -81,5 +81,7 @@ const popularServices = [
   { name: "Canva Pro", icon: "🖼️", category: "Software", price: "$12.99/month", cancelUrl: "https://www.canva.com/settings" },
 ];
 
-// Helper map: serviceName -> object
-const popularServiceMap = Object.fromEntries(popularServices.map(s => [s.name, s]));
+// 🔥 Map ultra utile
+const commonServicesMap = Object.fromEntries(
+  commonServices.map(s => [s.name, s])
+);

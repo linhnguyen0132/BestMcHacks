@@ -5,34 +5,33 @@
 // ---------- Dropdown (global) ----------
 function initServiceDropdown() {
   const select = document.getElementById("trialServiceSelect");
-  if (!select) return;
-
-  // Si data.js n'est pas chargé, on évite de casser tout le JS
-  if (typeof commonServices === "undefined") {
-    console.warn("commonServices is undefined. Make sure data.js is loaded before app.js");
-    return;
-  }
+  if (!select || typeof commonServices === "undefined") return;
 
   select.innerHTML = `
     <option value="">Select a service…</option>
     <option value="manual">Other (type manually)</option>
   `;
 
-  Object.keys(commonServices).sort().forEach(service => {
-    const opt = document.createElement("option");
-    opt.value = service;
-    opt.textContent = `${commonServices[service].icon || "📱"} ${service}`;
-    select.appendChild(opt);
-  });
+  commonServices
+    .slice()
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .forEach(service => {
+      const opt = document.createElement("option");
+      opt.value = service.name;
+      opt.textContent = `${service.icon} ${service.name}`;
+      select.appendChild(opt);
+    });
 }
+
 
 // Auto-fill cancel url (et prix plus tard si tu veux)
 function onServiceSelectChange() {
   const select = document.getElementById("trialServiceSelect");
   const nameInput = document.getElementById("trialName");
+  const priceInput = document.getElementById("trialPrice");
   const urlInput = document.getElementById("trialUrl");
 
-  if (!select || !nameInput || !urlInput) return;
+  if (!select) return;
 
   const value = select.value;
 
@@ -42,12 +41,15 @@ function onServiceSelectChange() {
     return;
   }
 
-  nameInput.disabled = true;
-  nameInput.value = value;
+  const svc = commonServicesMap[value];
+  if (!svc) return;
 
-  const svc = commonServices[value];
-  urlInput.value = svc?.cancelUrl || "";
+  nameInput.disabled = true;
+  nameInput.value = svc.name;
+  priceInput.value = svc.price || "";
+  urlInput.value = svc.cancelUrl || "";
 }
+
 
 // ---------- One single DOMContentLoaded ----------
 document.addEventListener("DOMContentLoaded", async () => {
