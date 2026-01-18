@@ -10,7 +10,6 @@ from core.database import get_db
 router = APIRouter(prefix="/api/trials", tags=["trials"])
 
 class TrialCreate(BaseModel):
-    userId: str
     serviceName: str
     endDate: date
     cancelUrl: Optional[str] = None
@@ -40,64 +39,66 @@ def oid(s: str) -> ObjectId:
 from pymongo.errors import DuplicateKeyError
 
 @router.post("")
-async def create_trial(
-    payload: TrialCreate,
-    user: dict = Depends(get_current_user)  
-):
+async def create_trial(payload: TrialCreate, user: dict = Depends(get_current_user)):
     db = get_db()
     doc = payload.model_dump()
-    doc["userId"] = str(user["_id"])  
+
+    # ✅ userId vient de la session
+    doc["userId"] = str(user["_id"])
+
     doc["endDate"] = date_to_datetime_utc(doc["endDate"])
+    now = datetime.now(timezone.utc)
     doc["status"] = "detected"
-    doc["createdAt"] = datetime.now(timezone.utc)
-    doc["updatedAt"] = datetime.now(timezone.utc)
+    doc["createdAt"] = now
+    doc["updatedAt"] = now
 
     try:
         res = await db.trials.insert_one(doc)
-        doc["_id"] = str(res.inserted_id)
-        return doc
-    except DuplicateKeyError:
-        existing = await db.trials.find_one({
-            "userId": doc["userId"],
-            "serviceName": doc["serviceName"],
-            "endDate": doc["endDate"]
-        })
-        existing["_id"] = str(existing["_id"])
-        return existing
+    except Exception as e:
+        # si tu veux gérer DuplicateKeyError proprement:
+        # from pymongo.errors import DuplicateKeyError
+        # if isinstance(e, DuplicateKeyError): raise HTTPException(409, "Trial already exists")
+        raise
+
+    doc["_id"] = str(res.inserted_id)
+    return doc
 
 @router.get("")
 async def list_trials(
+    user: dict = Depends(get_current_user),
     status: Optional[str] = None,
-    days: Optional[int] = None,
-    user: dict = Depends(get_current_user)  # ✅ ADD THIS
+    days: Optional[int] = None
 ):
     db = get_db()
-    q = {"userId": str(user["_id"])}  # ✅ USE AUTHENTICATED USER
+    q = {"userId": str(user["_id"])}
 
     if status:
         q["status"] = status
-    else:
-        q["status"] = {"$nin": ["canceled", "expired"]}
-
-    now = datetime.now(timezone.utc)
 
     if days is not None:
         if days < 0 or days > 365:
             raise HTTPException(400, "days must be between 0 and 365")
+
+        now = datetime.now(timezone.utc)
         until = now + timedelta(days=days)
         q["endDate"] = {"$gte": now, "$lte": until}
 
     out = []
+    now = datetime.now(timezone.utc)
+
     async for doc in db.trials.find(q).sort("endDate", 1):
         doc["_id"] = str(doc["_id"])
+
         end_date = doc["endDate"]
         if end_date.tzinfo is None:
             end_date = end_date.replace(tzinfo=timezone.utc)
+
         delta = end_date - now
         doc["daysLeft"] = max(0, int((delta.total_seconds() + 86399) // 86400))
         out.append(doc)
 
     return out
+
 
 @router.get("/upcoming")
 async def upcoming_reminders(
