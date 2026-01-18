@@ -54,11 +54,8 @@ async def create_trial(payload: TrialCreate, user: dict = Depends(get_current_us
 
     try:
         res = await db.trials.insert_one(doc)
-    except Exception as e:
-        # si tu veux gérer DuplicateKeyError proprement:
-        # from pymongo.errors import DuplicateKeyError
-        # if isinstance(e, DuplicateKeyError): raise HTTPException(409, "Trial already exists")
-        raise
+    except DuplicateKeyError:
+        raise HTTPException(status_code=409, detail="Trial already exists for this date.")
 
     doc["_id"] = str(res.inserted_id)
     return doc

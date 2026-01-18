@@ -5,7 +5,12 @@
 // ---------- Dropdown (global) ----------
 function initServiceDropdown() {
   const select = document.getElementById("trialServiceSelect");
-  if (!select || typeof commonServices === "undefined") return;
+  if (!select) return;
+
+  if (typeof commonServices === "undefined" || typeof commonServicesMap === "undefined") {
+    console.warn("commonServices/commonServicesMap missing. Check data.js load before app.js");
+    return;
+  }
 
   select.innerHTML = `
     <option value="">Select a service…</option>
@@ -15,42 +20,48 @@ function initServiceDropdown() {
   commonServices
     .slice()
     .sort((a, b) => a.name.localeCompare(b.name))
-    .forEach(service => {
+    .forEach(s => {
       const opt = document.createElement("option");
-      opt.value = service.name;
-      opt.textContent = `${service.icon} ${service.name}`;
+      opt.value = s.name;
+      opt.textContent = `${s.icon || "📱"} ${s.name}`;
       select.appendChild(opt);
     });
 }
 
-
-// Auto-fill cancel url (et prix plus tard si tu veux)
 function onServiceSelectChange() {
   const select = document.getElementById("trialServiceSelect");
   const nameInput = document.getElementById("trialName");
   const priceInput = document.getElementById("trialPrice");
   const urlInput = document.getElementById("trialUrl");
 
-  if (!select) return;
+  if (!select || !nameInput || !priceInput || !urlInput) {
+    console.warn("Missing form fields for autofill");
+    return;
+  }
 
   const value = select.value;
 
+  // manual / empty
   if (!value || value === "manual") {
     nameInput.disabled = false;
     if (value === "manual") nameInput.value = "";
+    // ne pas écraser ce que user a tapé dans price/url
     return;
   }
 
   const svc = commonServicesMap[value];
-  if (!svc) return;
+  if (!svc) {
+    console.warn("Service not found in commonServicesMap:", value);
+    return;
+  }
 
   nameInput.disabled = true;
   nameInput.value = svc.name;
+
+  // ✅ Autofill
   priceInput.value = svc.price || "";
   urlInput.value = svc.cancelUrl || "";
 }
-
-
 // ---------- One single DOMContentLoaded ----------
 document.addEventListener("DOMContentLoaded", async () => {
   // init dropdown even if not logged in
@@ -484,7 +495,63 @@ async function addTrial() {
   }
 }
 
+async function apiCreateTrial(payload) {
+  const res = await fetch("/api/trials", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(payload),
+  });
+
+  // Read body safely
+  let data = null;
+  const text = await res.text();
+  try { data = text ? JSON.parse(text) : null; } catch {}
+
+  if (!res.ok) {
+    // Duplicate
+    if (res.status === 409) {
+      throw new Error(data?.detail || "This trial already exists.");
+    }
+    throw new Error(data?.detail || `Request failed (${res.status})`);
+  }
+
+  return data;
+}
+
 // ====== TRIAL ACTIONS ======
+async function refreshSubscriptionsFromDB() {
+  const res = await fetch("/api/trials", { credentials: "include" });
+  if (!res.ok) {
+    console.warn("Could not load trials from DB:", res.status);
+    subscriptions = [];
+    return;
+  }
+
+  const trials = await res.json(); // array
+  // Transforme au format UI attendu
+  subscriptions = trials.map(t => {
+    const endIso = (t.endDate || "").toString();
+    const endDateStr = endIso.includes("T") ? endIso.split("T")[0] : endIso;
+
+    const daysLeft = typeof t.daysLeft === "number"
+      ? t.daysLeft
+      : daysUntil(endDateStr);
+
+    return {
+      _id: t._id,                 // Mongo id
+      id: t._id,                  // pour compat UI
+      name: t.serviceName,
+      icon: (commonServicesMap?.[t.serviceName]?.icon) || "📱",
+      expiryDate: endDateStr,
+      expiresIn: daysLeft,
+      status: calculateStatus(daysLeft),
+      price: t.renewalPrice ? `$${t.renewalPrice}` : (t.price || "Unknown"),
+      cancelUrl: t.cancelUrl || "",
+      category: "Subscription",
+    };
+  });
+}
 
 async function markCancelled(id) {
   try {
