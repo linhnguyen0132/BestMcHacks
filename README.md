@@ -6,45 +6,68 @@ McHacks 2026
 🧠 **Inspiration**
 Free trials are so *easily forgotten*. Many users lose money (often a ridiculous amount 😭) simply because they miss the cancellation window. **Free From Trial** helps users stay in control of their subscriptions by automatically detecting free-trial confirmations and reminding them before they're charged.
 
-🎯 **What It Does**
-**Free From Trial** focuses on **Gmail users**, securely scanning their inbox for free-trial confirmation emails and sending reminders via events on Google Calendar and/or SMS text to make sure they don't miss the cancellation window and before free-trial becomes paid subscription.
+Right now:  
+Free From Trial is a clean, simple **manual subscription & trial tracker**.  
+Users can add their free trials / subscriptions by hand and see everything in one beautiful dashboard with:  
+- Service name  
+- Start date  
+- End/charge date  
+- Countdown (days remaining)  
+- Direct cancellation link (when you provide it)  
 
-🔐 **Authentication (Google OAuth)**
-- Users sign in using Google OAuth
-- Secure, permission-based access to Gmail (testing phase)
-- FFT only reads emails with key-words like : 'trials', 'free-trial', etc.
+This already helps a lot — no more "I forgot" moments when everything is visible at a glance!
+
+**Not yet implemented (coming soon):**  
+- Automatic scanning of Gmail for trial confirmation emails  
+- Smart reminders (Google Calendar events, SMS)  
+- Any kind of automatic detection  
+
+🔐 **Authentication (Google OAuth)**  
+
+Planned (not active in current version):  
+- Users sign in using Google OAuth (testing phase)
+- Secure, permission-based access to Gmail (read-only, testing phase)  
+- FFT would only look for keywords like 'trial', 'free-trial', 'subscription confirmed', etc.  
 - No passwords stored, no unnecessary data access.
 
-🛠️ **How It Works**
-1. Google Login
-   - Via Google OAuth (testing phase)
-2. Gmail Analysis
-   - Gumloop analyzes Gmail inboxes to detect new trials
-3. Data Storage
-   - Detected trials are securely stored in **MongoDB Atlas**
-4. Backend & Scheduling
-   - Web app hosted on **Digital Ocean**, FFT calculates trial expiration dates
-5. Users Notification
-   - Users receive reminders before the trial ends (5, 3, 1 days beforehand)
-  
+🛠️ **How It Works** (Current version)
+
+1. User adds trial manually through a simple form  
+2. Trial data is securely stored in MongoDB Atlas  
+3. Beautiful dashboard shows all your trials with countdown timers & urgency indicators  
+4. Optional: add your own cancellation link for one-click access  
+
+**Future flow (planned):**  
+Google Login → Gmail Analysis (via keywords) → Auto-detect trials → Smart scheduling & notifications
+
 🧩 **Tech Stack**
-- Authentication: Google OAuth (Gmail)
-- Backend: Node.js
-- Database: MongoDB Atlas
-- Infrastructure: Digital Ocean
-- Email Automation & Parsing: Gumloop 
+
+- Frontend: React / Next.js / Tailwind CSS  
+- Backend: Node.js  
+- Database: MongoDB Atlas  
+- Infrastructure: Digital Ocean  
+- (Future) Email Automation & Parsing: Gumloop
 
 🏆 **Accomplishments**
-- Implemented secure Google OAuth Gmail authentication (testing phase)
-- Data storage
 
- 📚 **What We Learned**
-- OAuth security and permission scopes
-- Backend and Frontend deployment with App-Platform on Digital Ocean
-- Secure and persistent data storage with MongoDB Atlas
+- Built a clean, modern, mobile-friendly dashboard from scratch  
+- Full manual trial CRUD (add/edit/delete)  
+- Nice countdown timers + visual urgency cues  
+- Successful deployment on Digital Ocean App Platform  
+- Implemented secure data storage with MongoDB Atlas
+
+📚 **What We Learned**
+
+- OAuth security and permission scopes (prep work done!)  
+- Backend + Frontend deployment with Digital Ocean App Platform is smooth  
+- Secure and persistent data storage with MongoDB Atlas  
+- Good UX/design matters more than fancy features at first
 
 🔮 **What’s Next**
-- Support for non-Gmail email providers
-- Browser extension for one-click cancellation
-- Mobile app with push notifications
+
+- Google OAuth + limited Gmail read access  
+- Automatic trial detection from emails (keywords → Gumloop/custom parser)  
+- Reminders before trial ends (5, 3, 1 days beforehand) via Calendar / SMS / email  
+- Browser extension for one-click cancellation  
+- Mobile app / PWA with push notifications  
 - Subscription insights & spending analytics
